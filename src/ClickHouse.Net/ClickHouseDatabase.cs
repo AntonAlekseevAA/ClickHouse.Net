@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Text.RegularExpressions;
 using ClickHouse.Ado;
 using ClickHouse.Net.Entities;
 
@@ -9,6 +10,10 @@ namespace ClickHouse.Net
 {
     public class ClickHouseDatabase : IClickHouseDatabase, IDisposable
     {
+        private static readonly Regex ColumnAlreadyExistsException =
+            new Regex(
+                "(Cannot add column)(.{3,})(column with this name already exists)+",
+                RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
         private ClickHouseConnectionSettings _connectionSettings;
         private readonly IClickHouseCommandFormatter _commandFormatter;
         private readonly IClickHouseConnectionFactory _connectionFactory;
@@ -277,9 +282,23 @@ namespace ClickHouse.Net
             }, query);
         }
 
-        public void ExecuteNonQuery(string commandText)
+        public void ExecuteNonQuery(string commandText, bool ignoreAlterColumnErrors = false)
         {
-            Execute(cmd => { cmd.ExecuteNonQuery(); }, commandText);
+            try
+            {
+                Execute(cmd => { cmd.ExecuteNonQuery(); }, commandText);
+            }
+            catch (ClickHouseException ex)
+            {
+                /* Force ignore ALTER COLUMN IF EXISTS error
+                 * in old clickhouse server versions
+                 * https://github.com/ClickHouse/ClickHouse/issues/4565
+                 */
+                if (!ColumnAlreadyExistsException.IsMatch(ex.Message) || !ignoreAlterColumnErrors)
+                {
+                    throw;
+                }
+            }
         }
 
         public bool ExecuteExists(IDbCommand command)

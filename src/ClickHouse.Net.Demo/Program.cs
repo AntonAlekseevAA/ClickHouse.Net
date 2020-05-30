@@ -12,7 +12,7 @@ namespace ClickHouse.Net.Demo
         static void Main(string[] args)
         {
             var db = new ClickHouseDatabase(
-                new ClickHouseConnectionSettings("Compress=True;CheckCompressedHash=False;Compressor=lz4;Host=192.168.0.163;Port=9000;User=default;Password=;SocketTimeout=600000;Database=TeasersStat;"),
+                new ClickHouseConnectionSettings("Compress=True;CheckCompressedHash=False;Compressor=lz4;Host=localhost;Port=9000;User=default;Password=;SocketTimeout=600000;Database=TeasersStat;"),
                 new ClickHouseCommandFormatter(),
                 new ClickHouseConnectionFactory(),
                 null,
@@ -22,7 +22,7 @@ namespace ClickHouse.Net.Demo
             db.BackupDatabase("TeasersStat");
             db.Close();
             */
-            var columns = db.DescribeTable("LastTeasersShows").ToArray();
+            /*var columns = db.DescribeTable("LastTeasersShows").ToArray();*/
 
             
             /* Get data using default binder
@@ -40,6 +40,20 @@ namespace ClickHouse.Net.Demo
             
             /* Using custom binder */
             /*CustomBinderDemo();*/
+            
+            // Force ALTER COLUMN IF NOT EXISTS behavior
+            /*db.CreateTable(new Table
+            {
+                Engine = "MergeTree(date, (date, SubParam1), 8192)",
+                Name = "Test",
+                Columns = new List<Column>()
+                {
+                    new Column("date", "Date"),
+                    new Column("SubParam1", "String"),
+                }
+            });
+            var command = "ALTER TABLE TeasersShows ADD COLUMN SubParam1 String";
+            db.ExecuteNonQuery(command, false);*/
         }
 
         public static void CustomBinderDemo()

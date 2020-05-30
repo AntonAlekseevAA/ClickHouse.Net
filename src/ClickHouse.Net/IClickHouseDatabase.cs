@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using ClickHouse.Ado;
 using ClickHouse.Net.Entities;
@@ -92,7 +93,12 @@ namespace ClickHouse.Net
         /// Execute a query that produces no results
         /// </summary>
         /// <param name="commandText">Text of query</param>
-        void ExecuteNonQuery(string commandText);
+        /// <param name="ignoreAlterColumnErrors">Suppress alter column errors when
+        /// column already exists. It's useful for old clickhouse server versions
+        /// where expression ALTER COLUMN IF NOT EXISTS not supports yet
+        /// or contains bug with this query https://github.com/ClickHouse/ClickHouse/issues/4565
+        /// Simply set this param to true, and not use IF NOT EXISTS in ALTER COLUMN expression</param>
+        void ExecuteNonQuery(string commandText, bool ignoreAlterColumnErrors = false);
         
         /// <summary>
         /// Bulk insert rows into table
